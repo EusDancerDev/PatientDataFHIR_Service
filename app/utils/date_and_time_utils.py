@@ -8,8 +8,6 @@
 from datetime import datetime, timedelta, timezone
 import time
 
-from pandas import Timestamp
-
 # Try to import `pytz` and set a flag for availability
 try:
     import pytz
@@ -237,11 +235,10 @@ def _nano_floated_time_str(time_ns):
 #--------------------------#
 
 # Option lists #
-DT_DTYPE_OPTIONS = ["datetime", "str", "timestamp"]
+DT_DTYPE_OPTIONS = ["datetime", "str"]
 
 # Dictionary mapping current time provider methods to the corresponding methods
 CURRENT_DATETIME_DICT = {
     DT_DTYPE_OPTIONS[0] : lambda tz_arg: datetime.datetime.now(tz_arg),
-    DT_DTYPE_OPTIONS[1] : lambda tz_arg: time.ctime(tz_arg),
-    DT_DTYPE_OPTIONS[2] : lambda tz_arg: Timestamp.now(tz_arg)
+    DT_DTYPE_OPTIONS[1] : lambda tz_arg: time.ctime(tz_arg)
 }
