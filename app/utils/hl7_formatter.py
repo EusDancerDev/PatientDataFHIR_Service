@@ -78,7 +78,7 @@ def format_vital_signs_message(
         # MSH - Message Header
         msh = message.msh
         msh.msh_3 = "OSAKIDETZA"
-        msh.msh_4 = "PATIENT_DATA_RETRIEVER"
+        msh.msh_4 = "PATIENT_DATA_FHIR"
         msh.msh_5 = "REMOTE_SYSTEM"
         msh.msh_6 = "REMOTE_APP"
         msh.msh_7 = format_datetime(datetime.now())
