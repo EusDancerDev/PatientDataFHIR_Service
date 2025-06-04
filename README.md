@@ -1,11 +1,11 @@
-# Patient Data Retrieval API
+# Patient Data FHIR Service
 
 A Flask-based REST API for retrieving and managing patient medical data. The API provides endpoints for querying patient data across different tables and returns the results in FHIR v5 format.
 
 ## Project Structure
 
 ```
-PatientDataRetriever
+PatientDataFHIR_Service
 ├── app/                    # Main application code
 ├── docs/                   # Documentation files
 │   ├── examples/          # Example API responses
@@ -77,7 +77,7 @@ The API supports querying from the following table categories:
 1. Clone the repository:
    ```bash
    git clone <repository-url>
-   cd PatientDataRetriever
+   cd PatientDataFHIR_Service
    ```
 
 2. Create and activate a virtual environment:
