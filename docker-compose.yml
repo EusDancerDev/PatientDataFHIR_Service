@@ -1,6 +1,6 @@
 services:
-  patient-data-retriever:
-    image: patient-data-retriever
+  patient-data-fhir:
+    image: patient-data-fhir
     build:
       context: .
       dockerfile: ./Dockerfile
