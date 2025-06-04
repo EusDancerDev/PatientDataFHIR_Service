@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document details the implementation of a true SQL UNION ALL query in the PatientDataRetriever system to optimize data retrieval across multiple tables. This enhancement replaces the previous approach of making separate queries for each table, resulting in improved performance and reduced database load.
+This document details the implementation of a true SQL UNION ALL query in the PatientDataFHIR_Service system to optimize data retrieval across multiple tables. This enhancement replaces the previous approach of making separate queries for each table, resulting in improved performance and reduced database load.
 
 ## Implementation Details
 
