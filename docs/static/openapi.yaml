@@ -1,0 +1,492 @@
+openapi: 3.0.0
+info:
+  title: Patient Data Retrieval API
+  version: '3.4'
+  description: |
+    API for retrieving and filtering patient medical data.
+    
+    This API provides endpoints for querying patient records across multiple tables,
+    with support for table-specific ID and date field filtering. All responses are
+    returned in FHIR v5 format.
+    
+    Available tables include vital signs (saturacion_oxigeno, temperatura, presion_arterial),
+    clinical measurements (glucosa, peso, talla), and clinical events (medicacion, ulceras).
+    
+    Authentication is required for all endpoints except metadata endpoints.
+
+servers:
+  - url: http://localhost:5012
+    description: Local development server
+  - url: http://localhost:5009
+    description: Docker development server
+
+tags:
+  - name: Authentication
+    description: Operations for user authentication and authorisation
+  - name: Patient Data
+    description: Operations for retrieving patient medical data
+  - name: Metadata
+    description: Operations for retrieving metadata about the API and its components
+
+paths:
+  /api/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Authenticate a staff member
+      description: Authenticate a staff member using secure POST request. Credentials must be sent in the request body for security reasons.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: Staff member's first name
+                  example: "Emma"
+                usersurname:
+                  type: string
+                  description: Staff member's surname
+                  example: "Wilson"
+                password:
+                  type: string
+                  description: Staff member's password
+                  example: "EmmaW2024!"
+              required:
+                - username
+                - usersurname
+                - password
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  role:
+                    type: string
+                    example: "medical"
+                  token:
+                    type: string
+                    example: "Bearer eyJhbGciOiJIUzI1NiIs..."
+                  message:
+                    type: string
+                    example: "Authentication successful. Use the token in the Authorization header as: Bearer {token}"
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/metadata/api:
+    get:
+      tags:
+        - Metadata
+      summary: Get API documentation and usage information
+      description: Returns general API documentation and usage information.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentationResponse'
+
+  /api/metadata/vital_signs:
+    get:
+      tags:
+        - Metadata
+      summary: Get vital signs metadata
+      description: Returns metadata for vital signs tables and fields.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tables:
+                    type: array
+                    items:
+                      type: string
+                  fields:
+                    type: object
+                  format:
+                    type: string
+
+  /api/metadata/operational_data:
+    get:
+      tags:
+        - Metadata
+      summary: Get operational data metadata
+      description: Returns metadata for operational data tables and fields.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tables:
+                    type: array
+                    items:
+                      type: string
+                  fields:
+                    type: object
+                  format:
+                    type: string
+
+  /api/query/{table_name}/{id_value}/{min_date}/{max_date}:
+    get:
+      tags:
+        - Patient Data
+      summary: Query patient data via URL
+      description: Search for patient records using URL parameters with table name, ID and date range. Returns FHIR v5 Bundle resources.
+      parameters:
+        - name: table_name
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Name of the table to query (e.g., saturacion_oxigeno)
+          example: "saturacion_oxigeno"
+        - name: id_value
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Patient ID value
+          example: "0000021561"
+        - name: min_date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date-time
+          description: Start date (YYYY-MM-DD or YYYY-MM-DD HH:MM). If only date is provided, time defaults to 00:00
+          example: "2024-03-01"
+        - name: max_date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date-time
+          description: End date (YYYY-MM-DD or YYYY-MM-DD HH:MM). If only date is provided, time defaults to 23:59
+          example: "2024-03-31 23:59"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/vital_signs/{id_value}/{min_date}/{max_date}:
+    get:
+      tags:
+        - Vital Signs
+      summary: Query combined vital signs data
+      description: |
+        Retrieve data from all vital signs tables for a patient within a date range. 
+        Returns a consolidated FHIR v5 Bundle.
+        This endpoint uses an optimised UNION ALL query to retrieve data from multiple tables in a single database request.
+      parameters:
+        - name: id_value
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Patient ID value
+          example: "0000021561"
+        - name: min_date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date-time
+          description: Start date (YYYY-MM-DD or YYYY-MM-DD HH:MM). If only date is provided, time defaults to 00:00
+          example: "2024-03-01"
+        - name: max_date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date-time
+          description: End date (YYYY-MM-DD or YYYY-MM-DD HH:MM). If only date is provided, time defaults to 23:59
+          example: "2024-03-31 23:59"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/vital_signs/query:
+    post:
+      tags:
+        - Vital Signs
+      summary: Query patient vital signs data (complex query)
+      description: Query patient vital signs data for all vital sign tables using a JSON request body.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id_patient:
+                  type: string
+                  description: ID value for the patient
+                  example: "0000021561"
+                date_range:
+                  $ref: '#/components/schemas/DateRangeQuery'
+              required:
+                - id_patient
+                - date_range
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    PatientQuery:
+      type: object
+      properties:
+        table_name:
+          type: string
+          description: Name of the table to query
+          example: "saturacion_oxigeno"
+        id_patient:
+          type: string
+          description: Patient ID value
+          example: "0000021561"
+        date_range:
+          $ref: '#/components/schemas/DateRangeQuery'
+      required:
+        - table_name
+        - id_patient
+        - date_range
+
+    DateRangeQuery:
+      type: object
+      properties:
+        min_date:
+          type: string
+          format: date-time
+          description: Start date (YYYY-MM-DD or YYYY-MM-DD HH:MM). If only date is provided, time defaults to 00:00
+          example: "2024-03-01"
+        max_date:
+          type: string
+          format: date-time
+          description: End date (YYYY-MM-DD or YYYY-MM-DD HH:MM). If only date is provided, time defaults to 23:59
+          example: "2024-03-31 23:59"
+      required:
+        - min_date
+        - max_date
+
+    Response:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              resourceType:
+                type: string
+                example: "Bundle"
+              type:
+                type: string
+                example: "collection"
+              entry:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    resourceType:
+                      type: string
+                      example: "Observation"
+                    id:
+                      type: string
+                      example: "oxsat-1"
+                    status:
+                      type: string
+                      example: "final"
+                    category:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          coding:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                system:
+                                  type: string
+                                  example: "http://terminology.hl7.org/CodeSystem/observation-category"
+                                code:
+                                  type: string
+                                  example: "vital-signs"
+                                display:
+                                  type: string
+                                  example: "Vital Signs"
+                    code:
+                      type: object
+                      properties:
+                        coding:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              system:
+                                type: string
+                                example: "http://loinc.org"
+                              code:
+                                type: string
+                                example: "59408-5"
+                              display:
+                                type: string
+                                example: "Oxygen saturation in Blood"
+                    subject:
+                      type: object
+                      properties:
+                        reference:
+                          type: string
+                          example: "Patient/0000021561"
+                    effectiveDateTime:
+                      type: string
+                      format: date-time
+                      example: "2024-03-14T12:00:00"
+                    valueQuantity:
+                      type: object
+                      properties:
+                        value:
+                          type: number
+                          example: 98.5
+                        unit:
+                          type: string
+                          example: "%"
+                        system:
+                          type: string
+                          example: "http://unitsofmeasure.org"
+                        code:
+                          type: string
+                          example: "%"
+          description: Array of FHIR v5 Bundle resources containing patient observations
+        count:
+          type: integer
+          description: Number of records found
+      required:
+        - data
+        - count
+
+    Error:
+      type: object
+      properties:
+        field:
+          type: string
+          description: Field or category that caused the error
+          example: "database"
+        error:
+          type: string
+          description: Error message
+          example: "Database error occurred"
+
+    ValidationError:
+      type: object
+      properties:
+        field:
+          type: string
+          description: Field that failed validation
+          example: "table_name"
+        error:
+          type: string
+          description: Validation error message
+          example: "Invalid table name or field not supported for date filtering"
+
+    DocumentationResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: API description
+        usage:
+          type: string
+          description: Usage instructions
+        available_fields:
+          type: object
+          description: Available fields for each table
+        value_ranges:
+          type: object
+          description: Valid ranges and formats for fields
+        operations:
+          type: object
+          description: Available operations and endpoints
+        supported_tables:
+          type: array
+          items:
+            type: string
+          description: List of supported tables including vital signs, clinical measurements, and system tables
+        field_mappings:
+          type: object
+          description: Table-specific field mappings for ID and date columns
+        resource_prefixes:
+          type: object
+          description: FHIR resource ID prefixes for each table (e.g., 'oxsat' for saturacion_oxigeno)

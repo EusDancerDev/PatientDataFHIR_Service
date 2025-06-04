@@ -1,0 +1,16 @@
+services:
+  patient-data-retriever:
+    image: patient-data-retriever-v3-4
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - 5009:5010
+    environment:
+      - DATABASE_URL=postgresql://postgres:admin@host.docker.internal:5432/postgres
+      - DB_HOST=host.docker.internal
+      - DB_PORT=5432
+      - DOCKER_ENV=true
+      - PORT=5010
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

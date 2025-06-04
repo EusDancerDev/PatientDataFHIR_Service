@@ -1,0 +1,12 @@
+Flask
+SQLAlchemy
+psycopg2-binary
+python-dotenv
+numpy
+pymysql
+python-dateutil
+flask-cors
+flask-restx
+hl7apy
+fhir.resources
+PyJWT
