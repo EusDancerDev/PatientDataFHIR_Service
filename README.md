@@ -19,7 +19,6 @@ PatientDataFHIR_Service
 ├── docker-compose.yml    # Docker Compose configuration
 ├── main.py              # Application entry point
 ├── requirements.txt     # Python package dependencies with versions
-├── requirements_package_names_only.txt  # Package names without versions
 ├── setup_postgres_container.sh         # PostgreSQL container setup script
 └── docker_rebuild_container_from_scratch.sh  # Docker rebuild script
 ```
