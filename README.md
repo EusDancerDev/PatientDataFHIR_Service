@@ -5,7 +5,7 @@ A Flask-based REST API for retrieving and managing patient medical data. The API
 ## Project Structure
 
 ```
-PatientDataRetriever_v3-4/
+PatientDataRetriever
 ├── app/                    # Main application code
 ├── docs/                   # Documentation files
 │   ├── examples/          # Example API responses
@@ -77,7 +77,7 @@ The API supports querying from the following table categories:
 1. Clone the repository:
    ```bash
    git clone <repository-url>
-   cd PatientDataRetriever_v3-4
+   cd PatientDataRetriever
    ```
 
 2. Create and activate a virtual environment:
